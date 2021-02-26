@@ -119,7 +119,7 @@ def planeLevel(data,points,radius,plot=False):
 
     return levelledData
 
-filename = 'data/#75_v6_h8.dat'
+filename = 'data/test_data_1.dat'
 
 data = (-np.loadtxt(filename)*1e9).T
 data = planeLevel(data,np.array([[80,80],[560,80],[80,400]]),80,plot=False)
