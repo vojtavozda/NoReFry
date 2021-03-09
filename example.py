@@ -1,35 +1,31 @@
 
-# %% [markdown]
-# # Module for NoReFry algorithm 
-# 
-# ### Notes to data dimensions and plotting:
-# **`Numpy`** loads text file of `M` rows and `N` columns to `MxN` matrix. The
-# first coordinate would therefore indicate rows, i.e. `y` direction. In order
-# to access data as `data[x][y]`, data are transposed upon reading.
-# **`Matplotlib`** plotting command `pyplot.imshow` however prints the first
-# coordinate (`x`) in vertical direction. Therefore, second transposition is
-# used to plot output.
-# 
-# ```
-# data = transpose(file with matrix of M rows and N columns)
-# size of data = M x N
-# data[x,y]; where x = [0,M), y = [0,N)
-# plt.imshow(data.T) so x-axis is [0,M) and y-axis is [0,N)
-# ```
-# 
-# %% [markdown]                                                                 
-# ## Import modules
+""" Module for NoReFry algorithm 
+
+**Notes to data dimensions and plotting:**
+    ``Numpy`` loads text file of `M` rows and `N` columns to `MxN` matrix.
+    The first coordinate would therefore indicate rows, i.e. `y` direction.
+    In order to access data as `data[x][y]`, data are transposed upon reading.
+    ``Matplotlib`` plotting command `pyplot.imshow` however prints the first
+    coordinate (`x`) in vertical direction. Therefore, second transposition is
+    used to plot output.
+
+    data = transpose(file with matrix of M rows and N columns)
+    size of data = M x N
+    data[x,y]; where x = [0,M), y = [0,N)
+    plt.imshow(data.T) so x-axis is [0,M) and y-axis is [0,N)
+"""
 
 # %%
+# %matplotlib widget
+
 import os
 import numpy as np
+from numpy.lib.function_base import interp
+from scipy import interpolate
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-# %% [markdown]
-# ## Define functions
-
-# %%
+# Define functions -------------------------------------------------------------
 
 def make_colorbar_with_padding(ax):
     """
@@ -101,8 +97,8 @@ def planeLevel(data,points,radius,plot=False):
 
     # Calculate plane from points
     A,B,C = getPlaneABC(points[0],points[1],points[2])
-    X,Y = np.meshgrid(np.linspace(0,sY-1,sY),np.linspace(0,sX-1,sX))
-    plane = A*X + B*Y + C
+    X,Y = np.meshgrid(np.linspace(0,sX-1,sX),np.linspace(0,sY-1,sY))
+    plane = (A*X + B*Y + C).T
 
     # Subtract plane from the data
     levelledData = data - plane
@@ -135,7 +131,7 @@ def planeLevel(data,points,radius,plot=False):
 
         # Plot levelled data (output)
         ax3=fig.add_subplot(133)
-        plt.imshow(levelledData.T,origin='lower')
+        plt.imshow(levelledData.T,origin='lower',vmin=0,vmax=np.max(levelledData))
         plt.title('Levelled data (output)')
         cax3=make_colorbar_with_padding(ax3)
         b3 = plt.colorbar(cax=cax3)
@@ -145,55 +141,70 @@ def planeLevel(data,points,radius,plot=False):
 
     return levelledData
 
-# %% [markdown]
-# ## Load files & create depth scan
 
-# %%
+# Load files & create depth scan
 
 filenames = ['data/test_data_1.dat',
              'data/test_data_2.dat',
-             'data/test_data_3.dat']
+             'data/test_data_3.dat',
+             'data/test_data_4.dat',
+             'data/test_data_5.dat',
+             'data/test_data_6.dat',
+             'data/test_data_7.dat']
 
-energies = np.array([4227.57,6124.28,10182.96])/1000
+energies = np.array([4227.57,6124.28,10182.96,16717.71,25699.32,45753.05,74263.18])/1000
 
 d0 = None
-
 
 for filename in filenames:
 
     data = (-np.loadtxt(filename)*1e9).T
-    data = planeLevel(data,np.array([[80,80],[560,80],[80,400]]),80,plot=False)
-    data[data<0] = 0
+    data = planeLevel(data,np.array([[50,50],[50,400],[600,250]]),100,plot=True)
+    # print(np.min(data),np.max(data))
+    data[data<5] = 0
 
     sX,sY = data.shape
     depth_scan = -np.sort(-np.reshape(data,sX*sY))  # Sort data descending
+    N = sX*sY
+
+    # N = 1000
+    # f = interpolate.interp1d(np.arange(0,sX*sY),depth_scan)
+    # x2 = np.arange(0,N)*sX*sY/N
+    # depth_scan = f(x2)
 
     if d0 is None:
-        d0 = depth_scan.reshape(1,sX*sY)
+        d0 = depth_scan.reshape(1,N)
     else:
-        d0 = np.append(d0,depth_scan.reshape(1,sX*sY),axis=0)
+        d0 = np.append(d0,depth_scan.reshape(1,N),axis=0)
 
+    # break
 
-dx = dy = 1
+dx = dy = 0.0022
 
-# Cropping of negative data cause there are many redundant zeros in `d0` ->
+# Cropping of negative data causes there are many redundant zeros in `d0` ->
 # -> get index of last non-zero element and crop `d0` to new size
 d0N = np.max(np.nonzero(d0))+1
 d0 = d0[:,0:d0N]
+
+d0[-1,0] = d0[-1,1]
+d0[-2,0:1] = d0[-2,2]
 
 # X-vector (area) of D-scan
 S0 = np.arange(0,d0N)*dx*dy
 
 # Plot depth scan
+fig = plt.figure()
 for i in range(len(d0)):
-    plt.plot(S0,d0[i])
+    plt.plot(S0,d0[i],label=str(i))
 plt.title('Depth scan')
+plt.xlabel(r'S [mm$^2$]')
+plt.ylabel('Depth [nm]')
+plt.legend()
 plt.show()
 
-# %% [markdown]
-# ## Initialize matrices
 
 # %%
+# Initialize matrices ----------------------------------------------------------
 
 # Size in depth-direction, step, axis vector
 nD = 200; dD = np.max(d0)/(nD-1); d_axis = np.arange(0,nD)*dD
@@ -207,18 +218,18 @@ DS = np.zeros((nD,nS))
 # Inverse depth scan matrix (`iDS`): Same as `DS` but values are 1/energy.
 iDS = np.zeros((nD,nS))
 
+print("Matrix initialization: ",end='')
 # Fill matrices with numbers
 for i in range(len(d0)):
+    print(i,end='')
     for d in range(d0N):
         id = np.round(d0[i,d]/dD).astype(int)   # Index of depth
         iS = np.round(S0[d]/dS).astype(int)     # Index of area
         if id>=0 and iS>=0:
             DS[id,iS]  = energies[i]
             iDS[id,iS] = 1/energies[i]
+print('')
 
-
-plt.imshow(DS)
-plt.show()
 
 # Remove gaps in columns (important for large matrices)
 for iS in range(nS):
@@ -231,53 +242,55 @@ for iS in range(nS):
                         DS[id3,iS]  = e
                         iDS[id2,iS] = 1/e
 
-
-plt.imshow(DS)
+fig = plt.figure()
+plt.imshow(DS,origin='lower',aspect='auto',interpolation='none',
+    extent =[s_axis.min(), s_axis.max(), d_axis.min(), d_axis.max()])
+plt.title('DS matrix')
+plt.xlabel(r'S [mm$^2$]')
+plt.ylabel('Depth [nm]')
 plt.show()
 
-# %% [markdown]
-# ## Iteraction loop
 
 # %%
 # Init f-scan and dose vector --------------------------------------------------
 
-DS_count = DS>0
+DS_count = 1*(DS>0)
 
-E0 = DS[:,0]                # just to keep original value of E
-E = E0                      # E is a dose vector
+E0 = (DS[:,0]).copy()       # just to keep original value of E
+E = E0.copy()               # E is a dose vector
 E2 = E**2                   # variance of E
-E_count = E>0               # nonzero E-counter
-E_avg = E                   # averaged dose vector
-E_avg2 = E2                 # variance of averaged E vector
-E_avg_count = E_avg>0       # counter of non-negative values of E_avg
+E_count = 1*(E>0)           # nonzero E-counter
+E_avg = E.copy()            # averaged dose vector
+E_avg2 = E2.copy()          # variance of averaged E vector
+E_avg_count = 1*(E_avg>0)   # counter of non-negative values of E_avg
 E_sigma = np.sqrt(E2-E**2)  # sigma vector 
 
 f = np.zeros(nS)            # fluence scan vector
 f2 = f**2                   # variance of f
-f_count = f                 # counter of f-scan
-f_avg = f                   # averaged f vector
-f_avg2 = f2                 # variance of averaged f vector
-f_avg_count = f_avg>0       # counter of non-negative values of f_avg
+f_count = f.copy()          # counter of f-scan
+f_avg = f.copy()            # averaged f vector
+f_avg2 = f2.copy()          # variance of averaged f vector
+f_avg_count = 1*(f_avg>0)   # counter of non-negative values of f_avg
 f_sigma = np.sqrt(f2-f**2)  # sigma vector
 
+print("DS",DS.shape," | E",E.shape, " | f",f.shape, " | f_c",f_count.shape)
+
+fig = plt.figure()
+plt.plot(d_axis,E0)
+
+# Iteraction loop
 
 
-fluence_results = np.zeros((4,len(f)))
-energy_results = np.zeros((4,len(E)))
+for i in range(1):
 
-fluence_results[0,:] = f_avg
-energy_results[0,:] = E_avg
-
-print(f.shape)
-
-for i in range(10):
+    print("i = ",i)
 
     df = E_avg.dot(iDS)
     f = f + df
     f_count = f_count + E_avg_count.dot(DS_count)
     f_avg[f_count>0] = f[f_count>0] / f_count[f_count>0]
 
-    f_avg_count = f_avg>0
+    f_avg_count = 1*(f_avg>0)
 
     f2 = f2 + (E_avg**2).dot(iDS**2)
     f_avg2[f_count>0] = f2[f_count>0] / f_count[f_count>0]
@@ -293,33 +306,28 @@ for i in range(10):
     # plt.scatter(s_axis,f_avg)
     # plt.show()
  
-    dE = (DS.dot(f_avg.T)).T
+    dE = DS.dot(f_avg)
     E = E + dE
-    E_count = E_count + (DS_count.dot(f_avg_count.T)).T
+    E_count = E_count + DS_count.dot(f_avg_count)
     E_avg[E_count>0] = E[E_count>0] / E_count[E_count>0]
 
-    E_avg_count = (E_avg>0)*1
+    E_avg_count = 1*(E_avg>0)
 
-    E2 = E2 + ((DS**2).dot((f_avg.T)**2)).T
+    E2 = E2 + (DS**2).dot(f_avg**2)
     E_avg2[E_count>0] = E2[E_count>0] / E_count[E_count>0]
     E_sigma = np.sqrt(E_avg2 - E_avg**2)
 
-    # Do first plot here -------
-    plt.scatter(d_axis,E_avg-E_sigma/2)
-    plt.scatter(d_axis,E_avg+E_sigma/2)
-    plt.scatter(d_axis,E_avg)
-    plt.show()
 
+    plt.plot(d_axis,E_avg)
 
-# %%
-x = np.array([[0,1,3,0],[0,4,3,1]])
-a = x
-# a[x>0] = a[x>0] / x[x>0]
-print(a)
-print(x)
-print((x>0)*1)
-print((x-np.min(x))/(np.max(x)-np.min(x)))
+# Do first plot here -------
+# fig = plt.figure()
+# plt.scatter(d_axis,E_avg-E_sigma/2)
+# plt.scatter(d_axis,E_avg+E_sigma/2)
+# plt.scatter(d_axis,E_avg)
+plt.show()
 
+print("DS",DS.shape," | E",E.shape, " | f",f.shape)
 
 
 # %%
