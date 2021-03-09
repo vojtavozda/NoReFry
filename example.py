@@ -254,12 +254,12 @@ plt.show()
 # %%
 # Init f-scan and dose vector --------------------------------------------------
 
-DS_count = 1*(DS>0)
+DS_count = (DS>0)
 
 E0 = (DS[:,0]).copy()       # just to keep original value of E
 E = E0.copy()               # E is a dose vector
 E2 = E**2                   # variance of E
-E_count = 1*(E>0)           # nonzero E-counter
+E_count = (E>0)           # nonzero E-counter
 E_avg = E.copy()            # averaged dose vector
 E_avg2 = E2.copy()          # variance of averaged E vector
 E_avg_count = 1*(E_avg>0)   # counter of non-negative values of E_avg
@@ -270,7 +270,7 @@ f2 = f**2                   # variance of f
 f_count = f.copy()          # counter of f-scan
 f_avg = f.copy()            # averaged f vector
 f_avg2 = f2.copy()          # variance of averaged f vector
-f_avg_count = 1*(f_avg>0)   # counter of non-negative values of f_avg
+f_avg_count = (f_avg>0)   # counter of non-negative values of f_avg
 f_sigma = np.sqrt(f2-f**2)  # sigma vector
 
 print("DS",DS.shape," | E",E.shape, " | f",f.shape, " | f_c",f_count.shape)
@@ -278,12 +278,9 @@ print("DS",DS.shape," | E",E.shape, " | f",f.shape, " | f_c",f_count.shape)
 fig = plt.figure()
 plt.plot(d_axis,E0)
 
-# Iteraction loop
+# * Iteraction loop ------------------------------------------------------------
 
-
-for i in range(1):
-
-    print("i = ",i)
+for i in range(10):
 
     df = E_avg.dot(iDS)
     f = f + df
@@ -292,19 +289,14 @@ for i in range(1):
 
     f_avg_count = 1*(f_avg>0)
 
-    f2 = f2 + (E_avg**2).dot(iDS**2)
-    f_avg2[f_count>0] = f2[f_count>0] / f_count[f_count>0]
-    f_sigma = np.sqrt(f_avg2 - f_avg**2)
+    # f2 = f2 + (E_avg**2).dot(iDS**2)
+    # f_avg2[f_count>0] = f2[f_count>0] / f_count[f_count>0]
+    # f_sigma = np.sqrt(f_avg2 - f_avg**2)
 
     # Normalize `f_avg`
     f_avg = (f_avg-np.min(f_avg))/(np.max(f_avg)-np.min(f_avg))
     f_avg[0] = 1
-    
-    # # Do first plot here -------
-    # plt.scatter(s_axis,f_avg-f_sigma/2)
-    # plt.scatter(s_axis,f_avg+f_sigma/2)
-    # plt.scatter(s_axis,f_avg)
-    # plt.show()
+
  
     dE = DS.dot(f_avg)
     E = E + dE
@@ -313,9 +305,9 @@ for i in range(1):
 
     E_avg_count = 1*(E_avg>0)
 
-    E2 = E2 + (DS**2).dot(f_avg**2)
-    E_avg2[E_count>0] = E2[E_count>0] / E_count[E_count>0]
-    E_sigma = np.sqrt(E_avg2 - E_avg**2)
+    # E2 = E2 + (DS**2).dot(f_avg**2)
+    # E_avg2[E_count>0] = E2[E_count>0] / E_count[E_count>0]
+    # E_sigma = np.sqrt(E_avg2 - E_avg**2)
 
 
     plt.plot(d_axis,E_avg)
