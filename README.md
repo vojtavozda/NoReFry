@@ -19,12 +19,13 @@ like to read just a summary, check the [poster](https://github.com/vojtavozda/No
 As the core of the algorithm is quite simple and most of the work consists of
 data preparation which is individual for each case, no module has been
 developed. Instead, description of an example is provided in
-[`example.py`](https://github.com/vojtavozda/NoReFry/blob/main/example.py),
+[`example.py`](https://github.com/vojtavozda/NoReFry/blob/main/example.py) and
 Jupyter notebook
-[`example.ipynb`](https://github.com/vojtavozda/NoReFry/blob/main/example.ipynb)
-and its compiled version
-[`example.html`](https://github.com/vojtavozda/NoReFry/blob/main/example.html).
-It uses real data from the `data` folder used in the original publication.
+[`example.ipynb`](https://github.com/vojtavozda/NoReFry/blob/main/example.ipynb).
+If it does not work here on GitHub check it at
+[nbviewer.jupyter.org](https://nbviewer.jupyter.org/github/vojtavozda/NoReFry/blob/main/example.ipynb).
+This example uses real data from the `data` folder used in the original
+publication.
 
 Please commit here if you find any mistakes or improvements.
 
