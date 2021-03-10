@@ -6,8 +6,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-# Define functions -------------------------------------------------------------
-
 def make_colorbar_with_padding(ax):
     """
     Create colorbar axis that fits the size of a plot detailed here:
