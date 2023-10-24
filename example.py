@@ -128,7 +128,7 @@ for iS in range(nS):
                 if DS[id2,iS] == e:
                     for id3 in range(id,id2):
                         DS[id3,iS]  = e
-                        iDS[id2,iS] = 1/e
+                        iDS[id3,iS] = 1/e
 
 fig = plt.figure()
 plt.imshow(DS,origin='lower',aspect='auto',interpolation='none',
